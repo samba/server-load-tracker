@@ -12,7 +12,7 @@ import signal
 
 from gevent.pool import Pool
 
-from ServerTrack.daemon import ServerTrack
+from ServerTrack.service import ServerTrack
 
 def run_server():
 	service = ServerTrack(pool_size = 20)
