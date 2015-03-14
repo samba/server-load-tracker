@@ -41,7 +41,9 @@ class ServerTrack(object):
 				yield {
 					'time': time_id,
 					'cpuload': cpuload / len(records),
-					'memload': memload / len(records)
+					'memload': memload / len(records),
+					'samples': len(records),
+					'interval': interval
 				}
 
 
@@ -56,7 +58,7 @@ class ServerTrack(object):
 			now = time.time()
 			stats = assemble_stats(server_name, now, duration, interval)
 			start_response('200 OK', [])
-			return [ 't{time} {cpuload} {memload}'.format(**i) for i in stats ]
+			return [ 't={time} cpu={cpuload} mem={memload} s={samples} int={interval}\n'.format(**i) for i in stats ]
 	
 
 
