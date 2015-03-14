@@ -7,21 +7,20 @@ import urllib2
 import urllib
 import random
 import threading
-import re
 import signal
 import time
-
+import json
 
 from gevent.pool import Pool
 
 from ServerTrack.service import ServerTrack
 
 def run_server():
-	try:
-		service = ServerTrack(pool_size = 20)
-		service.run()
-	finally:
-		service.stop()
+	service = ServerTrack(pool_size = 20)
+	thread = threading.Thread(target = service.run)
+	thread.start()
+	return thread, service
+
 
 
 
@@ -29,22 +28,12 @@ class ServerTrackTest(unittest.TestCase):
 
 	host = 'http://localhost:8080'
 
-	RE_RESULT_PARSER = re.compile(r'^t=([0-9\-:T]+) cpu=([0-9\.]+) mem=([0-9\.]+) s=([0-9]+) int=([0-9]+)$')
-
 	def setUp(self):
 		random.seed(12345)
-		self.service = threading.Thread(target = run_server)
-		self.service.start()
-
-		def quit(sig, frame):
-			if self.service is not None:
-				self.service.join()
-
-		signal.signal(signal.SIGINT, quit)
 
 	def tearDown(self):
-		self.service.join()
-		del self.service
+		pass
+	
 
 	@staticmethod
 	def post(request_pair):
@@ -57,14 +46,17 @@ class ServerTrackTest(unittest.TestCase):
 		req = urllib2.urlopen(cls.host + url)
 		return req.getcode(), req.read()
 
-	def parse_result(self, result):
-		for match in self.RE_RESULT_PARSER.match(result):
-			yield int(match.group(4))
+	def parse_result_samples(self, result):
+		data = json.loads(result)
+		for record in data:
+			yield int(record['samples'])
 
 	def testPushHostRecords(self):
 		total_records = 1000
 		hosts = [ 'alpha', 'bravo' ]
 		request_queue = []
+
+		thread, service = run_server() # Starts the service
 
 		for i in range(1, total_records, 1):
 			current_url = '{host}/perf/{name}/'.format(
@@ -81,9 +73,16 @@ class ServerTrackTest(unittest.TestCase):
 
 
 		code, result = self.retr('/perf/alpha/last_minute')
-		print result
+		samples_alpha = self.parse_result_samples(result)
+
 
 		code, result = self.retr('/perf/bravo/last_minute')
-		print result
+		samples_bravo = self.parse_result_samples(result)
+
+		service.stop()
+		thread.join()
+
+		total_samples = sum(list(samples_alpha) + list(samples_bravo))
+		self.assertEqual(total_samples, total_records)
 	
 
