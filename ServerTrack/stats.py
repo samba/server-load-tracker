@@ -1,10 +1,7 @@
 import time
+import datetime
 import logging
-import sys
 
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 class StatsCollector(object):
 
@@ -79,7 +76,14 @@ def tagRecordsByTimeBasis(records, time_basis):
 
 def groupRecordsByTimeBasis(records, time_basis):
 	current_id, current_set = None, []
-	for tag, time, values in tagRecordsByTimeBasis(records, time_basis):
+
+	def render_timestamp(current_id):
+		dt = datetime.datetime.fromtimestamp(current_id * time_basis)
+		return dt.strftime('%Y-%m-%dT%H:%M:%S')
+
+
+
+	for tag, timestamp, values in tagRecordsByTimeBasis(records, time_basis):
 		if current_id is None:
 			# Starting fresh
 			current_id = tag
@@ -89,14 +93,14 @@ def groupRecordsByTimeBasis(records, time_basis):
 			current_set.append(values)
 		else:
 			# A tag change occured; emit current set
-			yield current_id, current_set
+			yield render_timestamp(current_id), current_set
 			# Start the next sequence
 			current_id = tag
 			current_set = [ values ]
 
 	# There may be a residual set for the last tag
 	if current_id is not None and len(current_set):
-		yield current_id, current_set
+		yield render_timestamp(current_id), current_set
 
 
 
