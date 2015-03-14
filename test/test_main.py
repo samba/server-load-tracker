@@ -7,6 +7,7 @@ import urllib2
 import urllib
 import random
 import multiprocessing
+import re
 
 
 from ServerTrack.daemon import ServerTrack
@@ -19,6 +20,8 @@ def run_server():
 class ServerTrackTest(unittest.TestCase):
 
 	host = 'http://localhost:8080'
+
+	RE_RESULT_PARSER = re.compile(r'^t=([0-9\-:T]+) cpu=([0-9\.]+) mem=([0-9\.]+) s=([0-9]+) int=([0-9]+)$')
 
 	def setUp(self):
 		random.seed(12345)
@@ -36,14 +39,27 @@ class ServerTrackTest(unittest.TestCase):
 		req = urllib2.urlopen(self.host + url)
 		return req.getcode(), req.read()
 
-	def testPushHostAlpha(self):
-		for i in range(1, 3000, 1):
-			print 'Request #{0:d}'.format(i)
-			code = self.post('/perf/alpha/', {
-				'cpuload': random.random(),
-				'memload': random.random()
+	def parse_result(self, result):
+		for match in self.RE_RESULT_PARSER.match(result):
+			yield int(match.group(4))
+
+	def testPushHostRecords(self):
+		total_records = 1000
+		hosts = [ 'alpha', 'bravo' ]
+
+		def printResult(query):
+			code, result = self.retr(query)
+			self.assertEqual(code, 200)
+			print result
+
+		for i in range(1, total_records, 1):
+			current_host = hosts[ int((random.random() * 10) % len(hosts)) ]
+			code = self.post('/perf/{host}/'.format(host = current_host), {
+				'cpuload': random.random() * 10,
+				'memload': random.random() * 10
 			})
 
-		code, result = self.retr('/perf/alpha/last_hour')
-		self.assertEqual(code, 200)
-		print result
+		printResult('/perf/alpha/last_minute')
+		printResult('/perf/bravo/last_minute')
+	
+
