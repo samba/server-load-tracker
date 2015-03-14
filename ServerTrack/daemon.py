@@ -15,7 +15,7 @@ from stats import StatsCollector, groupRecordsByTimeBasis
 
 class ServerTrack(object):
 
-	RE_URI_PARSE = re.compile(r'^/perf/([A-Za-z0-9]{2,128})/(last_hour|last_day)?')
+	RE_URI_PARSE = re.compile(r'^/perf/([A-Za-z0-9]{2,128})/(last_hour|last_day|last_minute)?')
 
 	def __init__(self, pool_size = 20, max_history_duration = 3600 * 24, service_port = 8080):
 		self.pool_size = 20
@@ -28,6 +28,7 @@ class ServerTrack(object):
 		pool = Pool(self.pool_size)
 
 		stats_modes = {
+			'last_minute': (60, 1), # duration 60 seconds, interval 1 second
 			'last_hour': (3600, 60), # duration 60 minutes, interval 1 minute
 			'last_day': (24 * 3600, 3600) # duration 24 hours, interval 60 minutes
 		}
