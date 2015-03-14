@@ -64,6 +64,10 @@ class ServerTrack(object):
 	def run(self):
 		"""Prepare the WSGI service layer. [Refactor for clarity in progress]."""
 
+		# This persists in the shared memory of greenlet threads invoked by
+		# gevent. By design, they avoid simultaneous access to the same shared
+		# memory, so race conditions (inserting data out of chronological order)
+		# should be unlikely. gevent/greenlets leverage stack allocation, it seems.
 		collector = StatsCollector(max_duration = self.max_history_duration)
 
 		def retrieve_stats(start_response, server_name, stats_mode):
