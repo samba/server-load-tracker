@@ -7,6 +7,8 @@ from gevent.wsgi import WSGIServer
 from gevent.queue import Queue
 from gevent import spawn
 
+import gevent
+import signal
 import json
 import urlparse
 import time
@@ -117,8 +119,12 @@ class ServerTrack(object):
 
 
 		# Start the service
+		gevent.signal(signal.SIGQUIT, gevent.kill)
+		gevent.signal(signal.SIGINT, self.stop)
 		self.server = WSGIServer(('', self.service_port), listener, spawn = self.pool)
 		self.server.serve_forever()
+
+		
 
 
 	def stop(self):

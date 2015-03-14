@@ -3,18 +3,16 @@
 import sys
 import signal
 
-from ServerTrack import daemon
+from ServerTrack.service import ServerTrack
 
-service = daemon.ServerTrack()
 
-def quit(sig, frame):
-	print >>sys.stderr, 'Terminating service'
-	service.stop()
+
+
 
 def main(args):
 	print >>sys.stderr, 'Initiating service' 
+	service = ServerTrack()
 	service.run()
-	signal.signal(signal.SIGINT, quit)
 
 
 if __name__ == '__main__':
