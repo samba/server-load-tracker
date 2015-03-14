@@ -84,9 +84,8 @@ class ServerTrack(object):
 			"""Append a record to the history collector; Responds to compliant POST requests."""
 			if req_body is not None:
 				params = urlparse.parse_qs(req_body.read())
-				sample_time = int(params.get('timestamp', time.time()))
 				collector.push(
-					timestmap = sample_time,
+					timestmap = time.time(),
 					hostname = server_name,
 					cpuload = float(params.get('cpuload', [])[0]),
 					memload = float(params.get('memload', [])[0])
