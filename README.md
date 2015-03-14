@@ -49,3 +49,7 @@ The values `memload` and `cpuload` represent averages for the given time interva
 ## Design Considerations
 
 Recording of incoming data needs to be fast, as presumably it'll run at much higher volume. Reporting (i.e. querying) of the dataset should still be fast as possible, but this is a secondary priority.
+
+## Known Issues
+
+- The unit tests in `test_main.py` invoke a thread to spawn the ServerTrack service. This thread doesn't terminate except by SIGINT (ctrl+C), so the unit tests will appear to hang. Interrupting the thread will allow the tests to continue.

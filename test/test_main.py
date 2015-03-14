@@ -6,17 +6,22 @@ monkey.patch_all()
 import urllib2
 import urllib
 import random
-import multiprocessing
+import threading
 import re
 import signal
+import time
+
 
 from gevent.pool import Pool
 
 from ServerTrack.service import ServerTrack
 
 def run_server():
-	service = ServerTrack(pool_size = 20)
-	service.run()
+	try:
+		service = ServerTrack(pool_size = 20)
+		service.run()
+	finally:
+		service.stop()
 
 
 
@@ -28,16 +33,18 @@ class ServerTrackTest(unittest.TestCase):
 
 	def setUp(self):
 		random.seed(12345)
-		self.service = multiprocessing.Process(target = run_server)
+		self.service = threading.Thread(target = run_server)
 		self.service.start()
 
 		def quit(sig, frame):
-			self.service.join()
+			if self.service is not None:
+				self.service.join()
 
 		signal.signal(signal.SIGINT, quit)
 
 	def tearDown(self):
 		self.service.join()
+		del self.service
 
 	@staticmethod
 	def post(request_pair):
