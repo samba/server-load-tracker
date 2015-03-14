@@ -29,21 +29,21 @@ GET /perf/{hostname}/{mode}
 Mode can be one of:
 - `last_hour`: list average load values by minute for the preceding 60 minutes 
 - `last_day`: list average load values by hour for the preceding 24 hours
+- `last_minute`: as above, values by seconds for preceding 60 seconds (for testing)
 
+The response is given in JSON.
 
 ### Example Output
 
 ```
-t=2015-03-14T02:51:00 cpu=0.506431422302 mem=0.489591065804 s=1494 int=60
-t=2015-03-14T02:52:00 cpu=0.492681923175 mem=0.495022286751 s=1506 int=60
+[   
+    {"memload": 4.898347757682457, "cpuload": 4.588075269711888, "interval": 1, "samples": 59, "time": "2015-03-14T04:16:11"}, 
+    {"memload": 4.793604115412621, "cpuload": 4.102268389332543, "interval": 1, "samples": 58, "time": "2015-03-14T04:16:12"}, 
+    ...
+]
 ```
 
-Each record provides:
-- `t` the timestamp for the (aggregate) data sample range
-- `cpu` the averaged CPU load time for that sample range
-- `mem` the averaged Memory load time for that sample range
-- `s` the number of samples in the given range
-- `int` the scale (seconds) of the given range
+The values `memload` and `cpuload` represent averages for the given time intervals.
 
 
 ## Design Considerations
