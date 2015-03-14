@@ -8,13 +8,16 @@ import urllib
 import random
 import multiprocessing
 import re
+import signal
 
+from gevent.pool import Pool
 
 from ServerTrack.daemon import ServerTrack
 
 def run_server():
 	service = ServerTrack(pool_size = 20)
 	service.run()
+
 
 
 class ServerTrackTest(unittest.TestCase):
@@ -28,15 +31,23 @@ class ServerTrackTest(unittest.TestCase):
 		self.service = multiprocessing.Process(target = run_server)
 		self.service.start()
 
+		def quit(sig, frame):
+			self.service.join()
+
+		signal.signal(signal.SIGINT, quit)
+
 	def tearDown(self):
 		self.service.join()
 
-	def post(self, url, data):
-		req = urllib2.urlopen(self.host + url, data = urllib.urlencode(data))
+	@staticmethod
+	def post(request_pair):
+		url, data = request_pair # gevent.pool.Pool.map() passes this as a single arg.
+		req = urllib2.urlopen(url, data = urllib.urlencode(data))
 		return req.getcode()
 
-	def retr(self, url):
-		req = urllib2.urlopen(self.host + url)
+	@classmethod
+	def retr(cls, url):
+		req = urllib2.urlopen(cls.host + url)
 		return req.getcode(), req.read()
 
 	def parse_result(self, result):
@@ -46,20 +57,26 @@ class ServerTrackTest(unittest.TestCase):
 	def testPushHostRecords(self):
 		total_records = 1000
 		hosts = [ 'alpha', 'bravo' ]
-
-		def printResult(query):
-			code, result = self.retr(query)
-			self.assertEqual(code, 200)
-			print result
+		request_queue = []
 
 		for i in range(1, total_records, 1):
-			current_host = hosts[ int((random.random() * 10) % len(hosts)) ]
-			code = self.post('/perf/{host}/'.format(host = current_host), {
+			current_url = '{host}/perf/{name}/'.format(
+				host = self.host,
+				name = hosts[ int((random.random() * 10) % len(hosts)) ]
+			)
+			request_queue.append((current_url, {
 				'cpuload': random.random() * 10,
 				'memload': random.random() * 10
-			})
+			}))
 
-		printResult('/perf/alpha/last_minute')
-		printResult('/perf/bravo/last_minute')
+		pool = Pool(20)
+		pool.map(self.post, request_queue)
+
+
+		code, result = self.retr('/perf/alpha/last_minute')
+		print result
+
+		code, result = self.retr('/perf/bravo/last_minute')
+		print result
 	
 
