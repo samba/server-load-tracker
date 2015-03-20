@@ -2,6 +2,15 @@
 
 Performance tracking service, with data residing solely in server memory, employing a threaded model for concurrent request handling.
 
+### What inspired this?
+
+It's a response to a coding challenge I addressed during the application process with a major Internet infrastructure firm, moving into the cloud services industry, and looking to automate service infrastructure management.
+
+The assignment required that I complete this within a 24 hour period. In the interest of candid review, I'll keep at least one branch in this project at the state it was for final delivery within that 24 hour window.
+
+There are a few areas where I can imagine this project being improved, namely in data structure and query performance. There are also a few minor errors, but they're largely inconsequential to the task's objective.
+
+
 ## Design Considerations
 
 Recording of incoming data needs to be fast, as presumably it'll run at much higher volume. Reporting (i.e. querying) of the dataset should still be fast as possible, but this is a secondary priority.
